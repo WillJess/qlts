@@ -37,6 +37,7 @@ input,select{font-family:inherit;font-size:14px}
   width:248px;flex:0 0 248px;background:linear-gradient(180deg,#13151c,#0d0f14);
   border-right:1px solid var(--line);position:sticky;top:0;height:100vh;
   display:flex;flex-direction:column;padding:22px 16px;gap:6px;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
 .brand{display:flex;align-items:center;gap:12px;padding:6px 8px 18px}
 .brand .logo{
@@ -226,7 +227,7 @@ tbody tr:last-child td{border-bottom:none}
 .side-backdrop.show{display:block}
 @media(max-width:760px){
   .menu-btn{display:grid}
-  .sidebar{position:fixed;left:0;top:0;z-index:50;height:100%;transform:translateX(-106%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.6);width:84vw;max-width:300px;flex-basis:auto}
+  .sidebar{position:fixed;left:0;top:0;z-index:50;height:100vh;height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;transform:translateX(-106%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.6);width:84vw;max-width:300px;flex-basis:auto}
   .sidebar.open{transform:translateX(0)}
   .topbar{padding:12px 14px;gap:12px}
   .content{padding:18px 14px}
@@ -237,6 +238,8 @@ tbody tr:last-child td{border-bottom:none}
   .stats{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   .toolbar{gap:8px}
   .toolbar input,.toolbar select{min-width:0;flex:1}
+  .tablewrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  .tablewrap table{min-width:680px}
 }
 
 /* ===== upgrade additions ===== */
@@ -1633,7 +1636,18 @@ function startCam(){
   if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){ if(msg)msg.textContent='Trình duyệt không hỗ trợ camera, hoặc trang không chạy ở chế độ an toàn (https / mở file trực tiếp).'; return; }
   box.classList.remove('hide'); if(msg)msg.textContent='Đang mở camera… cho phép quyền truy cập nếu được hỏi.';
   camScanner=new Html5Qrcode('camReader',{verbose:false});
-  const config={fps:12, aspectRatio:1.33, qrbox:function(w,h){ const m=Math.floor(Math.min(w,h)*0.8); return {width:m,height:Math.floor(m*0.55)}; }};
+  var fmts=null;
+  if(typeof Html5QrcodeSupportedFormats!=='undefined'){
+    var F=Html5QrcodeSupportedFormats;
+    fmts=[F.CODE_128,F.CODE_39,F.CODE_93,F.CODABAR,F.ITF,F.EAN_13,F.EAN_8,F.UPC_A,F.UPC_E,F.QR_CODE];
+  }
+  const config={
+    fps:15,
+    aspectRatio:1.33,
+    qrbox:function(w,h){ const bw=Math.floor(Math.min(w,h)*0.92); const bh=Math.floor(bw*0.42); return {width:bw,height:bh}; },
+    experimentalFeatures:{useBarCodeDetectorIfSupported:true}
+  };
+  if(fmts)config.formatsToSupport=fmts;
   camScanner.start({facingMode:'environment'},config,onCamDecode,function(){}).then(function(){
     camRunning=true; if(btn)btn.textContent='Tắt camera'; if(msg)msg.textContent='Đưa mã tài sản vào khung để quét (sẽ kêu bíp khi nhận).';
   }).catch(function(err){
